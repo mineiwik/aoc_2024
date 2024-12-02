@@ -1,5 +1,7 @@
 mod day;
 mod fetch;
+#[cfg(test)]
+mod mock_time;
 
 use std::{
     env,
@@ -10,11 +12,20 @@ use std::{
     time,
 };
 
+#[cfg(not(test))]
+use chrono::Utc;
+#[cfg(test)]
+use mock_time::Utc;
+
+use chrono::{Datelike, Timelike};
 use colored::{Colorize, CustomColor};
 pub use day::DaySolver;
 use fetch::fetch_input;
 
 use crate::{days::get_solver, AOC_YEAR};
+
+const AOC_MONTH: u32 = 12;
+const AOC_UTC_HOUR: u32 = 5;
 
 const AOC_GRAY: CustomColor = CustomColor {
     r: 105,
@@ -26,6 +37,12 @@ const AOC_BLUE: CustomColor = CustomColor {
     g: 15,
     b: 35,
 };
+const AOC_YELLOW: CustomColor = CustomColor {
+    r: 255,
+    g: 255,
+    b: 72,
+};
+const AOC_GREEN: CustomColor = CustomColor { r: 0, g: 176, b: 0 };
 
 #[derive(Debug, Clone)]
 enum AoCError {
@@ -60,10 +77,46 @@ async fn get_input(day: u8) -> Result<String, Box<dyn Error>> {
         );
         return Err(AoCError::NoInput.into());
     }
+
+    if !is_puzzle_available(day) {
+        println!("Unable to fetch unpublished puzzle. Please come back later!");
+        return Err(AoCError::NoInput.into());
+    }
+
     let input = fetch_input(AOC_YEAR, day).await?;
     let mut file = File::create(&filename)?;
     file.write_all(input.as_bytes())?;
     Ok(input)
+}
+
+fn is_puzzle_available(day: u8) -> bool {
+    let now = Utc::now();
+
+    if now.year() < AOC_YEAR.into() {
+        return false;
+    }
+
+    if now.year() > AOC_YEAR.into() {
+        return true;
+    }
+
+    if now.month() < AOC_MONTH {
+        return false;
+    }
+
+    if now.day() < day.into() {
+        return false;
+    }
+
+    if now.day() > day.into() {
+        return true;
+    }
+
+    if now.hour() < AOC_UTC_HOUR {
+        return false;
+    }
+
+    true
 }
 
 pub async fn solve_day(day: u8) -> Result<(), Box<dyn Error>> {
@@ -113,9 +166,9 @@ fn display_part_result(part: u8, part_res: Option<String>, time: u128) {
 
     println!(
         "({}) Part {}: {} (took {} ms)",
-        "*".bright_yellow(),
+        "*".custom_color(AOC_YELLOW),
         part,
-        part_res.bright_yellow(),
+        part_res.custom_color(AOC_YELLOW),
         (time as f64) / 1000.0
     );
 }
@@ -124,7 +177,7 @@ pub fn display_banner(message: &str, x_padding: usize) {
     let x_padding = " ".repeat(x_padding).on_custom_color(AOC_BLUE);
     let y_border = "*"
         .repeat(message.len() + 4)
-        .bright_yellow()
+        .custom_color(AOC_YELLOW)
         .on_custom_color(AOC_BLUE);
 
     // Clear terminal
@@ -137,9 +190,9 @@ pub fn display_banner(message: &str, x_padding: usize) {
     println!(
         "{x_padding}{left_border}{message}{right_border}{x_padding}",
         x_padding = x_padding,
-        left_border = "* ".bright_yellow().on_custom_color(AOC_BLUE),
-        right_border = " *".bright_yellow().on_custom_color(AOC_BLUE),
-        message = message.bright_green().on_custom_color(AOC_BLUE),
+        left_border = "* ".custom_color(AOC_YELLOW).on_custom_color(AOC_BLUE),
+        right_border = " *".custom_color(AOC_YELLOW).on_custom_color(AOC_BLUE),
+        message = message.custom_color(AOC_GREEN).on_custom_color(AOC_BLUE),
     );
     println!(
         "{x_padding}{y_border}{x_padding}",
@@ -147,4 +200,120 @@ pub fn display_banner(message: &str, x_padding: usize) {
         y_border = y_border
     );
     println!();
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::TimeZone;
+    use mock_time::set_timestamp;
+
+    use super::*;
+
+    #[test]
+    fn is_puzzle_available_test_day1_unpublished_1_year_to_go() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms((AOC_YEAR - 1).into(), 12, 1, 5, 0, 0)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(1);
+
+        assert_eq!(res, false);
+    }
+
+    #[test]
+    fn is_puzzle_available_test_day1_unpublished_1_month_to_go() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms(AOC_YEAR.into(), 11, 1, 5, 0, 0)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(1);
+
+        assert_eq!(res, false);
+    }
+
+    #[test]
+    fn is_puzzle_available_test_day1_unpublished_1_day_to_go() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms(AOC_YEAR.into(), 11, 30, 5, 0, 0)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(1);
+
+        assert_eq!(res, false);
+    }
+
+    #[test]
+    fn is_puzzle_available_test_day1_unpublished_1_hour_to_go() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms(AOC_YEAR.into(), 12, 1, 4, 0, 0)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(1);
+
+        assert_eq!(res, false);
+    }
+
+    #[test]
+    fn is_puzzle_available_test_day1_unpublished_1_sec_to_go() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms(AOC_YEAR.into(), 12, 1, 4, 59, 59)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(1);
+
+        assert_eq!(res, false);
+    }
+
+    #[test]
+    fn is_puzzle_available_test_day14_unpublished_1_sec_to_go() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms(AOC_YEAR.into(), 12, 14, 4, 59, 59)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(14);
+
+        assert_eq!(res, false);
+    }
+
+    #[test]
+    fn is_puzzle_available_test_day1_published_now() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms(AOC_YEAR.into(), 12, 1, 5, 0, 0)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(1);
+
+        assert_eq!(res, true);
+    }
+
+    #[test]
+    fn is_puzzle_available_test_day14_published_now() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms(AOC_YEAR.into(), 12, 14, 5, 0, 0)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(14);
+
+        assert_eq!(res, true);
+    }
+
+    #[test]
+    fn is_puzzle_available_test_day1_published_1_sec_ago() {
+        let dt = chrono::Utc
+            .with_ymd_and_hms(AOC_YEAR.into(), 12, 1, 5, 0, 1)
+            .unwrap();
+        set_timestamp(dt.timestamp());
+
+        let res = is_puzzle_available(1);
+
+        assert_eq!(res, true);
+    }
 }
