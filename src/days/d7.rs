@@ -49,17 +49,35 @@ fn parse(input: &str) -> Vec<(usize, Vec<usize>)> {
         .collect()
 }
 
+fn get_multiplicator(val: usize) -> usize {
+    let mut cur = 10;
+    while val > cur {
+        cur *= 10;
+    }
+    cur
+}
+
 fn check(res: usize, cur: usize, operands: &[usize], part2: bool) -> bool {
     if operands.is_empty() {
         return res == cur;
     }
 
-    let add = check(res, cur + operands.first().unwrap(), &operands[1..], part2);
-    let mul = check(res, cur * operands.first().unwrap(), &operands[1..], part2);
+    if cur > res {
+        return false;
+    }
+
+    let next = *operands.first().unwrap();
+    let new_operands = &operands[1..];
+
+    let add = check(res, cur + next, new_operands, part2);
+    let mul = check(res, cur * next, new_operands, part2);
     let concat = if part2 {
-        let mut a = cur.to_string();
-        a.push_str(&operands.first().unwrap().to_string());
-        check(res, a.parse().unwrap(), &operands[1..], part2)
+        check(
+            res,
+            cur * get_multiplicator(next) + next,
+            new_operands,
+            part2,
+        )
     } else {
         false
     };

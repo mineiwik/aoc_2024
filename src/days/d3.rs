@@ -4,30 +4,34 @@ use crate::utils::DaySolver;
 
 pub struct Day3;
 
+const MUL_REG: &str = r"mul\((\d+),(\d+)\)";
+const INSTR_REG: &str = r"(mul\((\d+),(\d+)\)|do\(\)|don't\(\))";
+
 impl DaySolver for Day3 {
     fn part1(&self, input: &str) -> Option<String> {
-        let mul_re = Regex::new(r"(mul\(\d{1,3},\d{1,3}\))").unwrap();
-        let op_re = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
+        let mul_re = Regex::new(MUL_REG).unwrap();
         let mut sum = 0;
-        for (_, [mul]) in mul_re.captures_iter(input).map(|c| c.extract()) {
-            let c = op_re.captures(mul).unwrap();
-            sum += c[1].parse::<isize>().unwrap() * c[2].parse::<isize>().unwrap();
+        for (_, [op1, op2]) in mul_re.captures_iter(input).map(|c| c.extract()) {
+            sum += op1.parse::<isize>().unwrap() * op2.parse::<isize>().unwrap();
         }
         Some(sum.to_string())
     }
 
     fn part2(&self, input: &str) -> Option<String> {
-        let mul_re = Regex::new(r"(mul\(\d{1,3},\d{1,3}\)|do\(\)|don't\(\))").unwrap();
-        let op_re = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
+        let mul_re = Regex::new(INSTR_REG).unwrap();
         let mut sum = 0;
         let mut mul_enabled = true;
-        for (_, [mul]) in mul_re.captures_iter(input).map(|c| c.extract()) {
-            match mul {
+        for c in mul_re.captures_iter(input) {
+            let mut c = c.iter().flatten();
+            let instr = c.next()?.as_str();
+            match instr {
                 "don't()" => mul_enabled = false,
                 "do()" => mul_enabled = true,
                 _ if mul_enabled => {
-                    let c = op_re.captures(mul).unwrap();
-                    sum += c[1].parse::<isize>().unwrap() * c[2].parse::<isize>().unwrap();
+                    c.next();
+                    let op1: isize = c.next()?.as_str().parse().unwrap();
+                    let op2: isize = c.next()?.as_str().parse().unwrap();
+                    sum += op1 * op2;
                 }
                 _ => {}
             }

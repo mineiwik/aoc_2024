@@ -51,6 +51,7 @@ impl Map {
 struct Guard {
     pos: (isize, isize),
     dir: Direction,
+    visited: HashSet<(isize, isize)>,
 }
 
 impl Map {
@@ -79,6 +80,9 @@ impl Guard {
             return;
         }
         self.pos = new_pos;
+        if !self.has_left_map(map) {
+            self.visited.insert(self.pos);
+        }
     }
 
     fn turn_right(&mut self) {
@@ -101,6 +105,9 @@ impl Guard {
 
     fn is_viable_obstacle(&self, map: &mut Map) -> bool {
         let new_pos = self.get_next_pos();
+        if self.visited.contains(&new_pos) {
+            return false;
+        }
         if map.has_left_map(&new_pos) {
             return false;
         }
@@ -131,26 +138,21 @@ pub struct Day6;
 impl DaySolver for Day6 {
     fn part1(&self, input: &str) -> Option<String> {
         let (mut guard, map) = parse(input);
-        let mut visited = HashSet::new();
 
         while !guard.has_left_map(&map) {
-            visited.insert(guard.pos);
             guard.make_move(&map);
         }
-        Some(visited.len().to_string())
+        Some(guard.visited.len().to_string())
     }
 
     fn part2(&self, input: &str) -> Option<String> {
         let (mut guard, mut map) = parse(input);
         let mut viable_ob = HashSet::new();
-        let mut visited = HashSet::new();
 
         while !guard.has_left_map(&map) {
-            let np = guard.get_next_pos();
-            if guard.is_viable_obstacle(&mut map) && !visited.contains(&np) {
-                viable_ob.insert(np);
+            if guard.is_viable_obstacle(&mut map) {
+                viable_ob.insert(guard.get_next_pos());
             }
-            visited.insert(guard.pos);
             guard.make_move(&map);
         }
 
@@ -202,6 +204,7 @@ fn parse(input: &str) -> (Guard, Map) {
     let guard = Guard {
         pos: guard_pos,
         dir: guard_dir,
+        visited: HashSet::new(),
     };
     (guard, map)
 }
