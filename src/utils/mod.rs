@@ -131,12 +131,15 @@ pub async fn solve_day(day: u8) -> Result<(), Box<dyn Error>> {
     let timer = time::Instant::now();
     let p1 = solver.part1(&input);
     let p1_time = timer.elapsed().as_micros();
+
+    display_part_result(1, p1, p1_time);
+
     let timer = time::Instant::now();
     let p2 = solver.part2(&input);
     let p2_time = timer.elapsed().as_micros();
 
-    display_part_result(1, p1, p1_time);
     display_part_result(2, p2, p2_time);
+
     println!();
     Ok(())
 }

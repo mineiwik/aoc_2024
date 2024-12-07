@@ -8,6 +8,9 @@ chrono = "0.4.38"
 colored = "2.1.0"
 dotenvy = "0.15.7"
 indoc = "2.0.5"
+petgraph = "0.6.5"
 regex = "1.11.1"
 reqwest = "0.12.9"
-tokio = { version = "1.41.1", features = ["full"] }
+strum = { version = "0.26.3", features = ["derive"] }
+strum_macros = "0.26.4"
+tokio = { version = "1.42.0", features = ["full"] }
