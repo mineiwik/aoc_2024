@@ -145,7 +145,7 @@ pub async fn solve_day(day: u8) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn get_day() -> Result<u8, Box<dyn Error>> {
-    print!("Enter day: ");
+    print!("Enter day (leave empty to solve all days): ");
     io::stdout().flush()?;
     let mut day = String::new();
     io::stdin().read_line(&mut day).unwrap();
@@ -176,7 +176,7 @@ fn display_part_result(part: u8, part_res: Option<String>, time: u128) {
     );
 }
 
-pub fn display_banner(message: &str, x_padding: usize) {
+pub fn display_banner(message: &str, x_padding: usize, clear: bool) {
     let x_padding = " ".repeat(x_padding).on_custom_color(AOC_BLUE);
     let y_border = "*"
         .repeat(message.len() + 4)
@@ -184,7 +184,9 @@ pub fn display_banner(message: &str, x_padding: usize) {
         .on_custom_color(AOC_BLUE);
 
     // Clear terminal
-    print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
+    if clear {
+        print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
+    }
     println!(
         "{x_padding}{y_border}{x_padding}",
         x_padding = x_padding,

@@ -7,6 +7,7 @@ mod d4;
 mod d5;
 mod d6;
 mod d7;
+mod d8;
 
 pub fn get_solver(day: u8) -> Option<Box<dyn DaySolver>> {
     match day {
@@ -17,6 +18,7 @@ pub fn get_solver(day: u8) -> Option<Box<dyn DaySolver>> {
         5 => Some(Box::new(d5::Day5)),
         6 => Some(Box::new(d6::Day6)),
         7 => Some(Box::new(d7::Day7)),
+        8 => Some(Box::new(d8::Day8)),
         _ => None,
     }
 }
