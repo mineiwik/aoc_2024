@@ -6,6 +6,7 @@ mod d11;
 mod d12;
 mod d13;
 mod d14;
+mod d15;
 mod d2;
 mod d3;
 mod d4;
@@ -34,6 +35,7 @@ pub fn get_solver(day: u8) -> Option<Box<dyn DaySolver>> {
             width: 101,
             height: 103,
         })),
+        15 => Some(Box::new(d15::Day15)),
         _ => None,
     }
 }
